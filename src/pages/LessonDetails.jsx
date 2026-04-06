@@ -194,7 +194,16 @@ export default function LessonDetails() {
       );
       setGeneratedOtp(response.data);
     } catch (error) {
-      alert(error.response?.data || 'Failed to generate OTP');
+      const responseData = error?.response?.data;
+      const message =
+        typeof responseData === 'string'
+          ? responseData
+          : responseData?.error || responseData?.message || error?.message || 'Failed to generate OTP';
+      console.error('Generate OTP failed:', {
+        status: error?.response?.status,
+        data: responseData,
+      });
+      alert(message);
     } finally {
       setGenLoading(false);
     }

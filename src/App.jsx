@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import CourseList from './pages/CourseList';
 import CourseDetails from './pages/CourseDetails';
 import LessonDetails from './pages/LessonDetails';
+import LiveClassroom from './pages/LiveClassroom';
 import QuizPage from './pages/QuizPage';
 import CourseManagement from './pages/CourseManagement';
 import AssignmentSubmit from './pages/AssignmentSubmit';
@@ -140,6 +141,11 @@ function AppRoutes() {
         <Route path="/courses/:courseId/lessons/:lessonId" element={
           <ProtectedRoute>
             <LessonDetails />
+          </ProtectedRoute>
+        } />
+        <Route path="/courses/:courseId/live" element={
+          <ProtectedRoute>
+            <LiveClassroom />
           </ProtectedRoute>
         } />
         <Route path="/courses/:courseId/quiz/:quizName" element={

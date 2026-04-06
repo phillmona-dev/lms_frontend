@@ -526,6 +526,11 @@ export default function CourseDetails() {
               Enrolled
             </span>
           )}
+
+          <Link to={`/courses/${encodeURIComponent(courseName)}/live`} className="cd-live-btn">
+            <Icon d={icons.clock} size={15} color="currentColor" />
+            Live Classroom
+          </Link>
         </div>
 
         {enrollMsg && enrollMsg !== 'success' && <p className="cd-enroll-error">{enrollMsg}</p>}
