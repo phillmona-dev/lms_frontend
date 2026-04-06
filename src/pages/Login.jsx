@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -57,7 +59,7 @@ export default function Login() {
             border: '1px solid rgba(255, 255, 255, 0.2)',
             backdropFilter: 'blur(8px)'
           }}>
-            Elevate Your Learning
+            {t('auth.elevate')}
           </div>
           
           <h1 style={{ 
@@ -69,9 +71,9 @@ export default function Login() {
             letterSpacing: '-0.5px',
             textShadow: '0 4px 20px rgba(0,0,0,0.9), 0 2px 5px rgba(0,0,0,0.8)'
           }}>
-            Welcome to the <br />
+            {t('auth.welcome_title')} <br />
             <span style={{ color: '#93c5fd' }}>
-              LMS Platform
+              {t('auth.platform_name')}
             </span>
           </h1>
           
@@ -83,18 +85,18 @@ export default function Login() {
             fontWeight: '500',
             textShadow: '0 2px 10px rgba(0,0,0,0.9)'
           }}>
-            A powerful Learning Management System to track your progress, engage with courses, and achieve your educational goals effectively.
+            {t('auth.platform_desc')}
           </p>
           
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '0.5rem 1rem', borderRadius: '30px', fontSize: '0.85rem', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', backdropFilter: 'blur(8px)', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-              <span style={{ fontSize: '1.1rem' }}></span> Interactive Courses
+              <span style={{ fontSize: '1.1rem' }}></span> {t('auth.interactive')}
             </span>
             <span style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '0.5rem 1rem', borderRadius: '30px', fontSize: '0.85rem', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', backdropFilter: 'blur(8px)', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-              <span style={{ fontSize: '1.1rem' }}></span> Progress Tracking
+              <span style={{ fontSize: '1.1rem' }}></span> {t('auth.tracking')}
             </span>
             <span style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '0.5rem 1rem', borderRadius: '30px', fontSize: '0.85rem', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', backdropFilter: 'blur(8px)', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-              <span style={{ fontSize: '1.1rem' }}></span> Community
+              <span style={{ fontSize: '1.1rem' }}></span> {t('auth.community')}
             </span>
           </div>
         </div>
@@ -114,7 +116,7 @@ export default function Login() {
               marginBottom: '0.5rem',
               color: '#0f172a'
             }}>
-              Sign In
+              {t('auth.sign_in')}
             </h2>
             <p style={{ color: '#475569', fontWeight: '500' }}>Log in to access your dashboard</p>
           </div>
@@ -136,7 +138,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>Email Address</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>{t('auth.email')}</label>
               <input 
                 type="email" 
                 className="input premium-input" 
@@ -154,7 +156,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>Password</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>{t('auth.password')}</label>
               <input 
                 type="password" 
                 className="input premium-input" 
@@ -190,7 +192,7 @@ export default function Login() {
                 color: 'white'
               }}
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? t('auth.signing_in') : t('auth.sign_in')}
             </button>
           </form>
           
@@ -201,7 +203,7 @@ export default function Login() {
             paddingTop: '1.5rem'
           }}>
             <p style={{ fontSize: '0.95rem', color: '#475569', fontWeight: '500' }}>
-              Don't have an account? <Link to="/register" style={{ fontWeight: '700', marginLeft: '0.25rem', color: '#2563eb' }}>Create one</Link>
+              {t('auth.no_account')} <Link to="/register" style={{ fontWeight: '700', marginLeft: '0.25rem', color: '#2563eb' }}>{t('auth.create_one')}</Link>
             </p>
           </div>
         </div>

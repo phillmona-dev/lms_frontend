@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 const Icon = ({ d, size = 18, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -26,6 +27,7 @@ const icons = {
 
 export default function RbacManagement() {
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('roles');
   const [loading, setLoading] = useState(true);
   const [privileges, setPrivileges] = useState([]);
@@ -143,7 +145,7 @@ export default function RbacManagement() {
     );
   };
 
-  if (loading && roles.length === 0) return <div className="flex-center full-screen">Loading System RBAC...</div>;
+  if (loading && roles.length === 0) return <div className="flex-center full-screen">{t('common.loading')} RBAC...</div>;
 
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', maxWidth: 1200, margin: '0 auto' }}>
@@ -152,17 +154,17 @@ export default function RbacManagement() {
         <div>
           <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#6366f1', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.75rem' }}>
             <Icon d={icons.back} size={16} />
-            Back to Dashboard
+            {t('common.back_to')} {t('common.dashboard')}
           </Link>
-          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.025em' }}>RBAC Management</h1>
-          <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '1.1rem' }}>Configure security roles, permissions and user access control.</p>
+          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.025em' }}>{t('administration.rbac_title')}</h1>
+          <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '1.1rem' }}>{t('administration.rbac_subtitle')}</p>
         </div>
         
         <div style={{ display: 'flex', background: '#f1f5f9', padding: '0.4rem', borderRadius: '14px', gap: '0.25rem' }}>
           {[
-            { id: 'roles', label: 'Roles', icon: icons.shield },
-            { id: 'privileges', label: 'Privileges', icon: icons.key },
-            { id: 'users', label: 'User Access', icon: icons.users },
+            { id: 'roles', label: t('administration.roles'), icon: icons.shield },
+            { id: 'privileges', label: t('administration.privileges'), icon: icons.key },
+            { id: 'users', label: t('administration.user_access'), icon: icons.users },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -188,11 +190,11 @@ export default function RbacManagement() {
           <div>
             <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>System Privileges</h3>
-                <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>Granular permissions that can be assigned to roles.</p>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>{t('administration.system_privileges')}</h3>
+                <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>{t('administration.rbac_subtitle')}</p>
               </div>
               <button onClick={() => handleOpenModal('privilege')} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px' }}>
-                <Icon d={icons.plus} size={18} color="white" /> Add Privilege
+                <Icon d={icons.plus} size={18} color="white" /> {t('administration.add_privilege')}
               </button>
             </div>
             <div style={{ padding: '1.5rem 2rem' }}>
@@ -212,7 +214,7 @@ export default function RbacManagement() {
                     <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5 }}>{p.description}</p>
                   </div>
                 ))}
-                {privileges.length === 0 && <div style={{ textAlign: 'center', padding: '3rem', gridColumn: '1/-1', color: '#94a3b8' }}>No privileges defined yet.</div>}
+                {privileges.length === 0 && <div style={{ textAlign: 'center', padding: '3rem', gridColumn: '1/-1', color: '#94a3b8' }}>{t('common.not_found')}</div>}
               </div>
             </div>
           </div>
@@ -223,11 +225,11 @@ export default function RbacManagement() {
           <div>
             <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>RBAC Roles</h3>
-                <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>Manage security groups and their associated authorities.</p>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>{t('administration.rbac_roles')}</h3>
+                <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>{t('administration.rbac_subtitle')}</p>
               </div>
               <button onClick={() => handleOpenModal('role')} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px' }}>
-                <Icon d={icons.plus} size={18} color="white" /> Create Role
+                <Icon d={icons.plus} size={18} color="white" /> {t('administration.create_role')}
               </button>
             </div>
             <div style={{ padding: '2rem' }}>
@@ -271,16 +273,16 @@ export default function RbacManagement() {
         {activeTab === 'users' && (
           <div>
             <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #f1f5f9' }}>
-               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>User Access Control</h3>
-               <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>Assign RBAC roles to users and manage their effective permissions.</p>
+               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>{t('administration.user_ac_title')}</h3>
+               <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>{t('administration.user_ac_subtitle')}</p>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>User</th>
-                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>Legacy Role</th>
-                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>RBAC Roles</th>
-                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b', textAlign: 'right' }}>Actions</th>
+                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>{t('common.user')}</th>
+                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>{t('common.role')}</th>
+                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b' }}>{t('administration.rbac_roles')}</th>
+                  <th style={{ padding: '1.25rem 2.25rem', fontSize: '0.875rem', fontWeight: 700, color: '#64748b', textAlign: 'right' }}>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -302,7 +304,7 @@ export default function RbacManagement() {
                       </div>
                     </td>
                     <td style={{ padding: '1.25rem 2.25rem', textAlign: 'right' }}>
-                      <button onClick={() => handleOpenModal('user-roles', u)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '10px' }}>Manage Roles</button>
+                      <button onClick={() => handleOpenModal('user-roles', u)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '10px' }}>{t('administration.manage_roles')}</button>
                     </td>
                   </tr>
                 ))}
@@ -372,9 +374,9 @@ export default function RbacManagement() {
               )}
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" style={{ flex: 1, borderRadius: '12px' }}>Cancel</button>
+                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" style={{ flex: 1, borderRadius: '12px' }}>{t('common.cancel')}</button>
                 <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ flex: 2, borderRadius: '12px' }}>
-                  {isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
+                  {isSubmitting ? t('common.loading') : (editingItem ? t('common.update') : t('common.create'))}
                 </button>
               </div>
             </form>

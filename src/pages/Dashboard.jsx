@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 // --- Utility: derive a clean role label from the user object ---
 const getRoleLabel = (user) => {
@@ -25,7 +26,7 @@ const icons = {
   book:    "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z",
   users:   "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
   bell:    "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
-  chart:   "M18 20V10M12 20V4M6 20v-6",
+  chart:   "M3 3v18h18M7 16v-4M11 16V8M15 16v-6M19 16v-8",
   star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
   shield:  "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
   award:   "M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.21 13.89L7 23l5-3 5 3-1.21-9.12",
@@ -199,6 +200,50 @@ const ThemeToggle = ({ isCollapsed }) => {
   );
 };
 
+const LanguageSwitcher = ({ isCollapsed }) => {
+  const { t, i18n } = useTranslation();
+  const languages = [
+    { code: 'en', label: 'English', flag: '🇺🇸' },
+    { code: 'am', label: 'አማርኛ', flag: '🇪🇹' },
+    { code: 'om', label: 'Oromiffa', flag: '🇪🇹' }
+  ];
+
+  return (
+    <div style={{ padding: '0.25rem 0.5rem' }}>
+      {!isCollapsed && (
+        <p style={{ 
+          fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 800, 
+          textTransform: 'uppercase', marginBottom: '0.4rem', paddingLeft: '0.3rem' 
+        }}>
+          {t('sidebar.language')}
+        </p>
+      )}
+      <div style={{ 
+        display: 'flex', flexDirection: isCollapsed ? 'column' : 'row', 
+        gap: '0.4rem', background: 'rgba(0,0,0,0.03)', padding: '0.4rem', 
+        borderRadius: '12px' 
+      }}>
+        {languages.map((lang) => (
+          <button
+            key={lang.code}
+            onClick={() => i18n.changeLanguage(lang.code)}
+            title={lang.label}
+            style={{
+              flex: 1, padding: '0.4rem', borderRadius: '8px', border: 'none',
+              background: i18n.language === lang.code ? 'var(--primary)' : 'transparent',
+              color: i18n.language === lang.code ? '#fff' : 'var(--text-secondary)',
+              cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.75rem',
+              fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            {isCollapsed ? lang.code.toUpperCase() : lang.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // --- Generic Section Panel (The "Modular UI" Wrapper) ---
 const DashboardPanel = ({ title, actionLabel, onAction, children, icon, iconColor }) => (
   <div className="dashboard-card-elevated" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -244,6 +289,7 @@ const DashboardPanel = ({ title, actionLabel, onAction, children, icon, iconColo
 // ============================================================
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const MOBILE_BREAKPOINT = 1024;
   const [courses, setCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
@@ -263,14 +309,17 @@ export default function Dashboard() {
   const isAdmin = role.includes('ADMIN') || role.includes('SYSTEM');
   const isInstructor = role.includes('INSTRUCTOR') || role.includes('TEACHER');
   const isStudent = role.includes('STUDENT');
+  const isSystemAdmin = role.includes('SYSTEM');
+  const isBureauUser = role.includes('BUREAU');
+  const canAccessCourses = !isSystemAdmin && !isBureauUser;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const [myCourses, allC, notifs, progress, insights] = await Promise.allSettled([
-          axios.get('/api/course/get-my-courses'),
-          axios.get('/api/course/get-all-courses'),
+          canAccessCourses ? axios.get('/api/course/get-my-courses') : Promise.resolve({ data: [] }),
+          canAccessCourses ? axios.get('/api/course/get-all-courses') : Promise.resolve({ data: [] }),
           axios.get('/api/users/notifications'),
           isStudent ? axios.get('/api/progress/me') : Promise.resolve({ data: null }),
           (isAdmin || isInstructor) ? axios.get('/api/ai-insights/school') : Promise.resolve({ data: [] })
@@ -295,7 +344,7 @@ export default function Dashboard() {
       }
     };
     fetchData();
-  }, []);
+  }, [canAccessCourses, isAdmin, isInstructor, isStudent]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -312,23 +361,41 @@ export default function Dashboard() {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
+  useEffect(() => {
+    if (!canAccessCourses && (activeSection === 'courses' || activeSection === 'browse' || activeSection === 'progress')) {
+      setActiveSection('overview');
+    }
+  }, [activeSection, canAccessCourses]);
+
   const stats = [
-    { title: isAdmin ? 'Total Courses' : 'My Courses', value: isAdmin ? allCourses.length : courses.length, icon: icons.book, color: '#6366f1', subtitle: 'Active courses', trend: 12 },
-    { title: 'Total Courses', value: allCourses.length, icon: icons.grad, color: '#ec4899', subtitle: 'On the platform', trend: 8 },
+    ...(canAccessCourses ? [
+      { title: isAdmin ? 'Total Courses' : 'My Courses', value: isAdmin ? allCourses.length : courses.length, icon: icons.book, color: '#6366f1', subtitle: 'Active courses', trend: 12 },
+      { title: 'Total Courses', value: allCourses.length, icon: icons.grad, color: '#ec4899', subtitle: 'On the platform', trend: 8 },
+    ] : []),
     { title: 'Notifications', value: notifications.length, icon: icons.bell, color: '#f59e0b', subtitle: 'Unread alerts' },
-    { title: 'Role', value: isAdmin ? 'Admin' : isInstructor ? 'Instructor' : 'Student', icon: icons.shield, color: '#10b981', subtitle: `${user?.name || ''}` },
+    { title: 'Role', value: isAdmin ? 'Admin' : isInstructor ? 'Instructor' : isBureauUser ? 'Bureau' : 'User', icon: icons.shield, color: '#10b981', subtitle: `${user?.name || ''}` },
   ];
 
   const sidebarLinks = [
-    { key: 'overview', icon: icons.home, label: 'Overview' },
-    { key: 'courses', icon: icons.book, label: isAdmin ? 'All Courses' : 'My Courses', badge: courses.length },
-    { key: 'browse', icon: icons.grad, label: 'Browse Courses', badge: allCourses.length },
-    { key: 'notifications', icon: icons.bell, label: 'Notifications', badge: notifications.length },
-    ...(isInstructor ? [{ key: 'management', icon: icons.shield, label: 'Manage Courses', to: '/management' }] : []),
-    ...(isInstructor ? [{ key: 'monitoring', icon: icons.users, label: 'Student Progress', to: '/student-monitoring' }] : []),
-    ...(isAdmin || isInstructor ? [{ key: 'ai', icon: icons.cpu || icons.shield, label: 'AI Insights', to: '/ai-insights' }] : []),
-    ...(isAdmin ? [{ key: 'rbac', icon: icons.shield, label: 'RBAC Control', to: '/rbac-management' }] : []),
-    ...(isStudent ? [{ key: 'progress', icon: icons.chart, label: 'My Progress' }] : []),
+    { key: 'overview', icon: icons.home, label: t('sidebar.overview') },
+    ...(canAccessCourses ? [
+      { key: 'courses', icon: icons.book, label: isAdmin ? t('sidebar.all_courses') : t('sidebar.my_courses'), badge: courses.length },
+      { key: 'browse', icon: icons.grad, label: t('sidebar.browse_courses'), badge: allCourses.length },
+    ] : []),
+    { key: 'notifications', icon: icons.bell, label: t('sidebar.notifications'), badge: notifications.length },
+    ...(isInstructor ? [{ key: 'management', icon: icons.shield, label: t('sidebar.manage_courses'), to: '/management' }] : []),
+    ...(isInstructor ? [{ key: 'monitoring', icon: icons.users, label: t('sidebar.student_progress'), to: '/student-monitoring' }] : []),
+    ...(isAdmin || isInstructor ? [{ key: 'ai', icon: icons.cpu || icons.shield, label: t('sidebar.ai_insights'), to: '/ai-insights' }] : []),
+    ...(isAdmin ? [{ key: 'rbac', icon: icons.shield, label: t('sidebar.rbac_control'), to: '/rbac-management' }] : []),
+    ...(isBureauUser || isSystemAdmin ? [
+      { key: 'bureau-overview', icon: icons.home, label: t('bureau.overview'), to: '/bureau/overview' },
+      { key: 'bureau-performance', icon: icons.chart, label: t('bureau.performance'), to: '/bureau/performance' },
+      { key: 'bureau-ranking', icon: icons.award, label: t('bureau.ranking'), to: '/bureau/ranking' },
+      { key: 'bureau-curriculum', icon: icons.book, label: t('bureau.curriculum'), to: '/bureau/curriculum' },
+      { key: 'bureau-exams', icon: icons.grad, label: t('bureau.exams'), to: '/bureau/exams' },
+      { key: 'bureau-compliance', icon: icons.shield, label: t('bureau.compliance'), to: '/bureau/compliance' },
+    ] : []),
+    ...(isStudent ? [{ key: 'progress', icon: icons.chart, label: t('sidebar.my_progress') }] : []),
   ];
 
   const handleSectionChange = (sectionKey) => {
@@ -386,7 +453,7 @@ export default function Dashboard() {
           <p style={{ 
             fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', 
             padding: '0 0.85rem', marginBottom: '0.5rem', display: sidebarOpen ? 'block' : 'none'
-          }}>Menu</p>
+          }}>{t('sidebar.menu')}</p>
           {sidebarLinks.map(l => (
             <NavItemWithLink
               key={l.key}
@@ -404,23 +471,26 @@ export default function Dashboard() {
             <p style={{ 
               fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', 
               padding: '0 0.85rem', marginBottom: '0.5rem', display: sidebarOpen ? 'block' : 'none'
-            }}>Quick Links</p>
-            <Link
-              to="/courses"
-              className="dashboard-side-link"
-              onClick={() => isMobile && setSidebarOpen(false)}
-            >
-              <div className="dashboard-side-item">
-                <span className="dashboard-side-icon"><Icon d={icons.arrow} size={18} /></span>
-                {sidebarOpen && 'Course Catalog'}
-              </div>
-            </Link>
+            }}>{t('sidebar.quick_links')}</p>
+            {canAccessCourses && (
+              <Link
+                to="/courses"
+                className="dashboard-side-link"
+                onClick={() => isMobile && setSidebarOpen(false)}
+              >
+                <div className="dashboard-side-item">
+                  <span className="dashboard-side-icon"><Icon d={icons.arrow} size={18} /></span>
+                  {sidebarOpen && 'Course Catalog'}
+                </div>
+              </Link>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div style={{ marginTop: 'auto', padding: '0 0.5rem 1rem' }}>
           <div className="dashboard-sidebar-footer" style={{ border: 'none', background: 'var(--surface-color)', borderRadius: '16px', padding: '0.75rem' }}>
+            <LanguageSwitcher isCollapsed={!sidebarOpen} />
             <ThemeToggle isCollapsed={!sidebarOpen} />
             <div className="dashboard-sidebar-user" style={{ padding: 0, marginTop: '0.5rem' }}>
               <div className="dashboard-sidebar-user-avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>
@@ -437,7 +507,7 @@ export default function Dashboard() {
               padding: '0.6rem 0.75rem', marginTop: '0.5rem', borderRadius: '10px', width: '100%' 
             }}>
               <Icon d={icons.logout} size={18} />
-              {sidebarOpen && 'Logout'}
+              {sidebarOpen && t('sidebar.logout')}
             </button>
           </div>
         </div>
@@ -465,6 +535,14 @@ export default function Dashboard() {
 
       case 'courses':
       case 'browse': {
+        if (!canAccessCourses) {
+          return (
+            <div className="dashboard-card-elevated" style={{ padding: '2rem' }}>
+              <h2 style={{ marginTop: 0 }}>No Course Access</h2>
+              <p style={{ marginBottom: 0 }}>Your current role does not include course management or enrollment pages.</p>
+            </div>
+          );
+        }
         const list = activeSection === 'browse' ? allCourses : courses;
         const title = activeSection === 'browse' ? 'Browse All Courses' : (isAdmin ? 'All Courses' : 'My Courses');
         return (
@@ -550,7 +628,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <h2 style={{ margin: '0 0 1rem', fontSize: '2.75rem', fontWeight: 900, lineHeight: 1.1, color: '#fff' }}>
-                  Welcome back,<br /> {user?.name?.split(' ')[0]}
+                  {t('dashboard.welcome')}<br /> {user?.name?.split(' ')[0]}
                 </h2>
                 <p style={{ margin: 0, fontSize: '1.1rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, fontWeight: 500 }}>
                   {isAdmin ? 'System wide administrative controls enabled. Monitor platform health and AI insights below.' : 
@@ -574,7 +652,9 @@ export default function Dashboard() {
                     padding: '1.25rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)',
                     boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
                   }}>
-                    <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{s.label}</p>
+                    <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
+                      {i === 0 ? t('dashboard.active_progress') : t('dashboard.points_earned')}
+                    </p>
                     <h4 style={{ margin: '0.2rem 0 0', fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>{s.val}</h4>
                   </div>
                 ))}
@@ -613,64 +693,65 @@ export default function Dashboard() {
             {/* Bottom Panels (Redesigned Modular UI) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
               
-              {/* My Courses panel */}
-              <DashboardPanel 
-                title={isAdmin ? 'All Courses' : 'My Courses'} 
-                actionLabel="View All" 
-                onAction={() => setActiveSection('courses')}
-                icon={icons.book}
-                iconColor="#4338ca"
-              >
-                {loading ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Loading workspace…</div>
-                ) : courses.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2rem' }}>
-                    <Icon d={icons.book} size={40} color="#e2e8f0" />
-                    <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No courses active</p>
-                    <Link to="/courses" style={{ color: '#0ea5a8', fontWeight: 800, fontSize: '0.8rem' }}>Browse curriculum →</Link>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {courses.slice(0, 4).map((c, i) => (
-                      <div key={i} style={{ 
-                        display: 'flex', gap: '1rem', alignItems: 'center', 
-                        padding: '0.75rem', borderRadius: '12px', transition: 'all 0.2s',
-                        cursor: 'pointer'
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <div style={{
-                          width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
-                          background: `linear-gradient(135deg, hsl(${(i * 55 + 210) % 360}, 70%, 94%), hsl(${(i * 55 + 210) % 360}, 70%, 88%))`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: `hsl(${(i * 55 + 210) % 360}, 60%, 45%)`, fontWeight: 900, fontSize: '1rem',
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
-                        }}>
-                          {(c.title || c.name || 'C')[0]}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {c.title || c.name || 'Course'}
-                          </p>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                             {c.duration ? `${c.duration} hours` : 'Learning in progress'}
-                          </p>
-                        </div>
-                        <Link to={`/courses/${encodeURIComponent(c.courseName || c.title || c.name)}`}>
-                          <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--surface-color)' }}>
-                            <Icon d={icons.arrow} size={16} color="#cbd5e1" />
+              {canAccessCourses && (
+                <DashboardPanel 
+                  title={isAdmin ? 'All Courses' : 'My Courses'} 
+                  actionLabel="View All" 
+                  onAction={() => setActiveSection('courses')}
+                  icon={icons.book}
+                  iconColor="#4338ca"
+                >
+                  {loading ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Loading workspace…</div>
+                  ) : courses.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <Icon d={icons.book} size={40} color="#e2e8f0" />
+                      <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No courses active</p>
+                      <Link to="/courses" style={{ color: '#0ea5a8', fontWeight: 800, fontSize: '0.8rem' }}>Browse curriculum →</Link>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {courses.slice(0, 4).map((c, i) => (
+                        <div key={i} style={{ 
+                          display: 'flex', gap: '1rem', alignItems: 'center', 
+                          padding: '0.75rem', borderRadius: '12px', transition: 'all 0.2s',
+                          cursor: 'pointer'
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{
+                            width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                            background: `linear-gradient(135deg, hsl(${(i * 55 + 210) % 360}, 70%, 94%), hsl(${(i * 55 + 210) % 360}, 70%, 88%))`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: `hsl(${(i * 55 + 210) % 360}, 60%, 45%)`, fontWeight: 900, fontSize: '1rem',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
+                          }}>
+                            {(c.title || c.name || 'C')[0]}
                           </div>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </DashboardPanel>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {c.title || c.name || 'Course'}
+                            </p>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                               {c.duration ? `${c.duration} hours` : 'Learning in progress'}
+                            </p>
+                          </div>
+                          <Link to={`/courses/${encodeURIComponent(c.courseName || c.title || c.name)}`}>
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--surface-color)' }}>
+                              <Icon d={icons.arrow} size={16} color="#cbd5e1" />
+                            </div>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </DashboardPanel>
+              )}
 
               {/* Notifications panel */}
               <DashboardPanel 
-                title="Recent Alerts" 
+                title={t('dashboard.recent_alerts')} 
                 actionLabel="View All" 
                 onAction={() => setActiveSection('notifications')}
                 icon={icons.bell}
@@ -692,14 +773,15 @@ export default function Dashboard() {
 
               {/* Quick Actions Grid */}
               <DashboardPanel 
-                title="Quick Access" 
+                title={t('dashboard.quick_access')} 
                 icon={icons.plus}
                 iconColor="#0ea5a8"
               >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                    {[
-                    { label: 'Browse', icon: icons.book, color: '#4338ca', bg: '#e0e7ff', onClick: () => setActiveSection('browse') },
+                    ...(canAccessCourses ? [{ label: 'Browse', icon: icons.book, color: '#4338ca', bg: '#e0e7ff', onClick: () => setActiveSection('browse') }] : []),
                     { label: 'Alerts', icon: icons.bell, color: '#d97706', bg: '#ffedd5', onClick: () => setActiveSection('notifications') },
+                    { label: 'Edu Search', icon: icons.search, color: '#065f46', bg: '#d1fae5', to: '/education-search' },
                     ...(isInstructor ? [
                       { label: 'Create', icon: icons.plus, color: '#7c3aed', bg: '#f3e8ff', to: '/management' },
                       { label: 'Manage', icon: icons.shield, color: '#db2777', bg: '#fce7f3', to: '/management' }
@@ -707,7 +789,7 @@ export default function Dashboard() {
                     ...(isStudent ? [
                       { label: 'Progress', icon: icons.chart, color: '#0e7490', bg: '#ecfeff', onClick: () => setActiveSection('progress') }
                     ] : []),
-                    { label: 'Catalog', icon: icons.grad, color: '#10b981', bg: '#d1fae5', to: '/courses' },
+                    ...(canAccessCourses ? [{ label: 'Catalog', icon: icons.grad, color: '#10b981', bg: '#d1fae5', to: '/courses' }] : []),
                     { label: 'Profile', icon: icons.profile, color: 'var(--text-secondary)', bg: '#f1f5f9', onClick: () => {} },
                   ].map((a, i) => {
                     const ActionBox = (

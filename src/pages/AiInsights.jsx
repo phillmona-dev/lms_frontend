@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 const Icon = ({ d, size = 18, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -24,6 +25,7 @@ const icons = {
 export default function AiInsights() {
   const [schoolInsights, setSchoolInsights] = useState([]);
   const [studentRisk, setStudentRisk] = useState([]);
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('school'); // 'school' or 'students'
 
@@ -59,7 +61,7 @@ export default function AiInsights() {
     return '#f0fdf4';
   };
 
-  if (loading && schoolInsights.length === 0) return <div className="flex-center full-screen">Analyzing LMS Data...</div>;
+  if (loading && schoolInsights.length === 0) return <div className="flex-center full-screen">{t('common.loading')}...</div>;
 
   return (
     <div style={{ fontFamily: 'Manrope, system-ui, sans-serif', maxWidth: 1200, margin: '0 auto', color: 'var(--text-primary)' }}>
@@ -67,10 +69,10 @@ export default function AiInsights() {
         <div>
           <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.75rem' }}>
             <Icon d={icons.back} size={16} />
-            Back to Dashboard
+            {t('common.back_to')} {t('common.dashboard')}
           </Link>
-          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>AI Insights & Proactive Risks</h1>
-          <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)' }}>Automated analysis of performance, behavior and attendance patterns.</p>
+          <h1 style={{ margin: 0, fontSize: '2.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>{t('insights.title')}</h1>
+          <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)' }}>{t('insights.subtitle')}</p>
         </div>
         
         <div style={{ display: 'flex', background: 'var(--bg-color)', padding: '0.4rem', borderRadius: '14px', gap: '0.25rem', border: '1px solid var(--surface-border)' }}>
@@ -79,13 +81,13 @@ export default function AiInsights() {
              background: activeSection === 'school' ? 'var(--surface-color)' : 'transparent',
              color: activeSection === 'school' ? 'var(--primary)' : 'var(--text-secondary)',
              fontWeight: 700, cursor: 'pointer', boxShadow: activeSection === 'school' ? 'var(--shadow-sm)' : 'none'
-           }}>Global View</button>
+           }}>{t('insights.global_view')}</button>
            <button onClick={() => setActiveSection('students')} style={{
              padding: '0.6rem 1.25rem', borderRadius: '10px', border: 'none',
              background: activeSection === 'students' ? 'var(--surface-color)' : 'transparent',
              color: activeSection === 'students' ? 'var(--primary)' : 'var(--text-secondary)',
              fontWeight: 700, cursor: 'pointer', boxShadow: activeSection === 'students' ? 'var(--shadow-sm)' : 'none'
-           }}>Student Risk List</button>
+           }}>{t('insights.student_risk')}</button>
         </div>
       </div>
 
@@ -103,7 +105,7 @@ export default function AiInsights() {
                     color: getRiskColor(insight.riskLevel), background: getRiskBg(insight.riskLevel),
                     border: `1px solid ${getRiskColor(insight.riskLevel)}22`
                   }}>
-                    {insight.riskLevel} RISK
+                    {insight.riskLevel} {t('insights.risk_level')}
                   </span>
                   <div style={{ color: getRiskColor(insight.riskLevel) }}><Icon d={icons.cpu} size={20} /></div>
                 </div>
@@ -114,7 +116,7 @@ export default function AiInsights() {
                 </div>
 
                 <div style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: '16px', borderLeft: `4px solid ${getRiskColor(insight.riskLevel)}` }}>
-                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Recommended Action</p>
+                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('insights.recommended_action')}</p>
                   <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500 }}>{insight.recommendedAction}</p>
                 </div>
               </div>
@@ -126,11 +128,11 @@ export default function AiInsights() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: 'var(--bg-color)', borderBottom: '1px solid var(--surface-border)' }}>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Student Name</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Risk Level</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Primary Signals</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Stats</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)', textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('common.user')}</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('insights.risk_level')}</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('insights.signals')}</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('common.role')} Stats</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)', textAlign: 'right' }}>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -154,17 +156,17 @@ export default function AiInsights() {
                   <td style={{ padding: '1.25rem 1.5rem' }}>
                     <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>Attendance</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{t('progress.attendance')}</span>
                         <span style={{ fontWeight: 700, color: risk.attendanceRate < 0.6 ? 'var(--danger)' : 'var(--text-primary)' }}>{Math.round(risk.attendanceRate)}%</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>Assignments</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{t('content.assignments')}</span>
                         <span style={{ fontWeight: 700, color: risk.assignmentCompletionRate < 0.6 ? 'var(--danger)' : 'var(--text-primary)' }}>{Math.round(risk.assignmentCompletionRate)}%</span>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                    <Link to="/student-monitoring" style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>Intervene</Link>
+                    <Link to="/student-monitoring" style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>{t('insights.intervene')}</Link>
                   </td>
                 </tr>
               ))}

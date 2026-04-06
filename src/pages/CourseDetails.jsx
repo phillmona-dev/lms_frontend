@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import ContextChatWidget from '../components/ContextChatWidget';
 
 const Icon = ({ d, size = 18, color = 'currentColor' }) => (
@@ -67,6 +68,7 @@ const Tab = ({ label, active, onClick, count }) => (
 export default function CourseDetails() {
   const { courseId } = useParams();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const courseName = decodeURIComponent(courseId);
 
   const [lessons, setLessons] = useState([]);
@@ -249,18 +251,18 @@ export default function CourseDetails() {
 
   const tabs = useMemo(
     () => [
-      { key: 'lessons', label: 'Lessons', count: lessons.length },
-      { key: 'assignments', label: 'Assignments', count: assignments.length },
-      { key: 'quizzes', label: 'Quizzes', count: quizzes.length },
-      ...(isStudent ? [{ key: 'progress', label: 'My Progress' }] : []),
+      { key: 'lessons', label: t('content.lessons'), count: lessons.length },
+      { key: 'assignments', label: t('content.assignments'), count: assignments.length },
+      { key: 'quizzes', label: t('content.quizzes'), count: quizzes.length },
+      ...(isStudent ? [{ key: 'progress', label: t('content.my_progress') }] : []),
       ...(isInstructor
         ? [
-            { key: 'students', label: 'Students', count: enrolledStudents.length },
-            { key: 'tools', label: 'Instructor Tools' },
+            { key: 'students', label: t('content.students'), count: enrolledStudents.length },
+            { key: 'tools', label: t('content.instructor_tools') },
           ]
         : []),
     ],
-    [assignments.length, quizzes.length, enrolledStudents.length, isInstructor, isStudent, lessons.length],
+    [assignments.length, quizzes.length, enrolledStudents.length, isInstructor, isStudent, lessons.length, t],
   );
 
   useEffect(() => {
@@ -486,12 +488,13 @@ export default function CourseDetails() {
   const attendanceRate = lessons.length
     ? Math.round((attendedLessons.length / lessons.length) * 100)
     : 0;
+  const contextualSearchHref = `/education-search?q=${encodeURIComponent(courseName)}&provider=ALL&limit=8`;
 
   return (
     <div className="cd-page ctx-page-with-chat">
       <Link to="/courses" className="cd-back-link">
         <Icon d={icons.back} size={16} color="currentColor" />
-        <span>Back to Courses</span>
+        <span>{t('common.back_to')} {t('common.courses')}</span>
       </Link>
 
       <section className="cd-hero">
@@ -516,24 +519,49 @@ export default function CourseDetails() {
               disabled={enrollLoading}
               className="cd-enroll-btn"
             >
-              {enrollLoading ? 'Enrolling...' : 'Enroll Now'}
+              {enrollLoading ? t('common.loading') : t('content.enroll_now')}
             </button>
           )}
 
           {isStudent && isEnrolled && (
             <span className="cd-enrolled-pill">
               <Icon d={icons.check} size={16} color="currentColor" />
-              Enrolled
+              {t('content.enrolled')}
             </span>
           )}
 
           <Link to={`/courses/${encodeURIComponent(courseName)}/live`} className="cd-live-btn">
             <Icon d={icons.clock} size={15} color="currentColor" />
-            Live Classroom
+            {t('content.live_classroom')}
           </Link>
         </div>
 
         {enrollMsg && enrollMsg !== 'success' && <p className="cd-enroll-error">{enrollMsg}</p>}
+      </section>
+
+      <section
+        className="glass-panel"
+        style={{
+          padding: '1rem 1.1rem',
+          borderRadius: '16px',
+          marginTop: '0.85rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.85rem',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1rem' }}>Contextual Learning Search</h3>
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Search educational materials for <strong>{courseName}</strong> from Google and YouTube.
+          </p>
+        </div>
+        <Link to={contextualSearchHref} className="cd-live-btn">
+          <Icon d={icons.book} size={15} color="currentColor" />
+          Find Materials
+        </Link>
       </section>
 
       <div className="cd-tabs-wrap">
@@ -555,7 +583,7 @@ export default function CourseDetails() {
           {tab === 'lessons' && (
             <section className="cd-stack">
               {lessons.length === 0 ? (
-                <EmptyState icon={icons.book} message="No lessons added to this course yet." />
+                <EmptyState icon={icons.book} message={t('content.no_lessons_yet')} />
               ) : (
                 lessons.map((lesson, index) => {
                   const lessonId = lessonIdOf(lesson);
@@ -577,7 +605,7 @@ export default function CourseDetails() {
                             {attended && (
                               <span className="cd-attended-pill">
                                 <Icon d={icons.check} size={12} color="currentColor" />
-                                Attended
+                                {t('content.attended')}
                               </span>
                             )}
                             {lesson.description && (
@@ -632,7 +660,7 @@ export default function CourseDetails() {
                               to={`/courses/${encodeURIComponent(courseName)}/assignment/${assignmentId}`}
                               className="cd-badge cd-badge-action"
                             >
-                              Submit Now
+                              {t('content.submit_now')}
                             </Link>
                           )}
 
@@ -643,7 +671,7 @@ export default function CourseDetails() {
                               onClick={() => handleDownloadAssignmentAttachment(assignment)}
                             >
                               <Icon d={icons.file} size={12} color="currentColor" />
-                              {attachmentTypeLabelOf(assignment)} • Download Attachment
+                              {attachmentTypeLabelOf(assignment)} • {t('content.download_attachment')}
                             </button>
                           )}
 
@@ -652,7 +680,7 @@ export default function CourseDetails() {
                               to={`/courses/${encodeURIComponent(courseName)}/assignment/${assignmentId}/submissions`}
                               className="cd-badge cd-badge-manage"
                             >
-                              View Submissions
+                              {t('content.view_submissions')}
                             </Link>
                           )}
                         </div>
@@ -682,17 +710,17 @@ export default function CourseDetails() {
                           {quiz.quizDuration && (
                             <span className="cd-meta-item">
                               <Icon d={icons.clock} size={14} color="currentColor" />
-                              Duration: {quiz.quizDuration}
+                              {t('content.duration')}: {quiz.quizDuration}
                             </span>
                           )}
                           {quiz.questionCount != null && (
                             <span className="cd-meta-item">
-                              {quiz.questionCount} questions
+                              {quiz.questionCount} {t('content.questions')}
                             </span>
                           )}
                           {isInstructor && quiz.submissionCount != null && (
                             <span className="cd-meta-item">
-                              {quiz.submissionCount} submissions
+                              {quiz.submissionCount} {t('content.submissions')}
                             </span>
                           )}
                         </div>
@@ -704,19 +732,19 @@ export default function CourseDetails() {
                               className="cd-btn cd-btn-sm cd-btn-secondary"
                               onClick={() => { setEditingQuiz(quiz); setShowEditQuizModal(true); }}
                             >
-                              Edit Quiz
+                              {t('content.edit_quiz')}
                             </button>
                             <button
                               className="cd-btn cd-btn-sm cd-btn-secondary"
                               onClick={() => { setSelectedQuizForQuestion(quiz); setShowAddQuestionToQuizModal(true); }}
                             >
-                              Add Question
+                              {t('content.add_question')}
                             </button>
                             <button
                               className="cd-btn cd-btn-sm cd-btn-danger"
                               onClick={() => handleDeleteQuiz(quizId)}
                             >
-                              Delete Quiz
+                              {t('content.delete_quiz')}
                             </button>
                           </div>
                         )}
@@ -729,7 +757,7 @@ export default function CourseDetails() {
                             aria-expanded={expandedQuizzes.has(quizId)}
                           >
                             <span className="cd-toggle-text">
-                              {expandedQuizzes.has(quizId) ? 'Hide Questions' : `View Questions (${quiz.questions.length})`}
+                              {expandedQuizzes.has(quizId) ? t('content.hide_questions') : `${t('content.view_questions')} (${quiz.questions.length})`}
                             </span>
                             <span className={`cd-toggle-icon ${expandedQuizzes.has(quizId) ? 'expanded' : ''}`}>
                               <Icon d={icons.chevronDown} size={16} color="currentColor" />
@@ -775,7 +803,7 @@ export default function CourseDetails() {
                                           className="cd-btn cd-btn-xs cd-btn-danger"
                                           onClick={() => handleRemoveQuestionFromQuiz(quizId, question.id)}
                                         >
-                                          Remove
+                                          {t('common.remove')}
                                         </button>
                                       </div>
                                     )}
@@ -792,7 +820,7 @@ export default function CourseDetails() {
                               to={`/courses/${encodeURIComponent(courseName)}/quiz/${encodeURIComponent(quiz.quizTitle)}`}
                               className="cd-badge cd-badge-action"
                             >
-                              Take Quiz
+                              {t('content.start_quiz')}
                             </Link>
                           )}
                         </div>
@@ -807,12 +835,12 @@ export default function CourseDetails() {
           {tab === 'progress' && isStudent && (
             <section className="cd-progress-wrap">
               <article className="cd-progress-card">
-                <h3>Attendance Breakdown</h3>
+                <h3>{t('content.attendance_list')}</h3>
 
                 <div className="cd-progress-summary">
                   <div className="cd-progress-value">{attendanceRate}%</div>
                   <div>
-                    <p className="cd-progress-title">Total Attendance</p>
+                    <p className="cd-progress-title">{t('progress.attendance')}</p>
                     <p className="cd-progress-subtitle">
                       {attendedLessons.length} of {lessons.length} lessons attended
                     </p>
@@ -841,11 +869,11 @@ export default function CourseDetails() {
           {tab === 'students' && isInstructor && (
             <section className="cd-students-wrap">
               {enrolledStudents.length === 0 ? (
-                <EmptyState icon={icons.users} message="No students enrolled in this course yet." />
+                <EmptyState icon={icons.users} message={t('content.students') + " " + t('common.not_found')} />
               ) : (
                 <div className="cd-student-panel">
                   <header>
-                    <h3>Enrolled Students ({enrolledStudents.length})</h3>
+                    <h3>{t('content.students')} ({enrolledStudents.length})</h3>
                   </header>
                   {enrolledStudents.map((student, index) => (
                     <div className="cd-student-row" key={studentIdOf(student) || index}>
@@ -884,7 +912,7 @@ export default function CourseDetails() {
                 <span className="cd-tool-icon">
                   <Icon d={icons.plus} size={24} color="currentColor" />
                 </span>
-                <h4>Add New Lesson</h4>
+                <h4>{t('common.add')} {t('common.new')} {t('common.lesson')}</h4>
                 <p>Add video content, slides, or reading material.</p>
               </button>
 
@@ -897,7 +925,7 @@ export default function CourseDetails() {
                 <span className="cd-tool-icon">
                   <Icon d={icons.plus} size={24} color="currentColor" />
                 </span>
-                <h4>Create Assignment</h4>
+                <h4>{t('common.create')} {t('content.assignments')}</h4>
                 <p>Set deadlines and PDF submission requirements.</p>
               </button>
 
@@ -910,7 +938,7 @@ export default function CourseDetails() {
                 <span className="cd-tool-icon">
                   <Icon d={icons.plus} size={24} color="currentColor" />
                 </span>
-                <h4>Add to Question Bank</h4>
+                <h4>{t('content.add_question')}</h4>
                 <p>Build a library of questions for your quizzes.</p>
               </button>
 
@@ -923,18 +951,18 @@ export default function CourseDetails() {
                 <span className="cd-tool-icon">
                   <Icon d={icons.quiz} size={24} color="currentColor" />
                 </span>
-                <h4>Launch New Quiz</h4>
+                <h4>{t('common.launch')} {t('common.quiz')}</h4>
                 <p>Create a quiz from your question bank.</p>
               </button>
 
               <section className="cd-question-bank">
                 <h3>Local Question Bank</h3>
-                {questions.length === 0 ? (
-                  <p className="cd-question-empty">
-                    No questions in bank. Add some above to create quizzes.
-                  </p>
-                ) : (
-                  <div className="cd-question-list">
+                  {questions.length === 0 ? (
+                    <p className="cd-question-empty">
+                      {t('common.no_questions_yet')}
+                    </p>
+                  ) : (
+                    <div className="cd-question-list">
                     {questions.map((question, index) => (
                       <article key={question.id || index} className="cd-question-item">
                         <p>
@@ -963,13 +991,13 @@ export default function CourseDetails() {
                             className="cd-btn cd-btn-xs cd-btn-secondary"
                             onClick={() => { setEditingQuestion(question); setShowEditQuestionModal(true); }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </button>
                           <button
                             className="cd-btn cd-btn-xs cd-btn-danger"
                             onClick={() => handleDeleteQuestion(question.id)}
                           >
-                            Delete
+                            {t('common.delete')}
                           </button>
                         </div>
                       </article>
@@ -990,11 +1018,11 @@ export default function CourseDetails() {
       />
 
       {showLessonModal && (
-        <Modal title="Add Lesson" onClose={() => setShowLessonModal(false)}>
+        <Modal title={t('common.add') + " " + t('common.lesson')} onClose={() => setShowLessonModal(false)}>
           <form onSubmit={handleAddLesson} className="cd-modal-form">
             <input
               type="text"
-              placeholder="Lesson Title"
+              placeholder={t('common.lesson') + " " + t('common.title')}
               className="input premium-input"
               required
               value={newLesson.title}
@@ -1008,7 +1036,7 @@ export default function CourseDetails() {
               onChange={(e) => setNewLesson({ ...newLesson, description: e.target.value })}
             />
             <button type="submit" className="btn btn-primary cd-full-btn">
-              Add Lesson
+              {t('common.add')} {t('common.lesson')}
             </button>
           </form>
         </Modal>
@@ -1047,14 +1075,14 @@ export default function CourseDetails() {
               }
             />
             <button type="submit" className="btn btn-primary cd-full-btn">
-              Create Assignment
+              {t('common.create')} {t('content.assignments')}
             </button>
           </form>
         </Modal>
       )}
 
       {showQuestionModal && (
-        <Modal title="Add Question to Bank" onClose={() => setShowQuestionModal(false)}>
+        <Modal title={t('content.add_question')} onClose={() => setShowQuestionModal(false)}>
           <form onSubmit={handleAddQuestion} className="cd-modal-form">
             {/* Question Type */}
             <select
@@ -1126,14 +1154,14 @@ export default function CourseDetails() {
             )}
 
             <button type="submit" className="btn btn-primary cd-full-btn">
-              Add to Bank
+              {t('common.add')} {t('common.to')} {t('common.bank')}
             </button>
           </form>
         </Modal>
       )}
 
       {showQuizModal && (
-        <Modal title="Launch Quiz" onClose={() => setShowQuizModal(false)}>
+        <Modal title={t('common.launch') + " " + t('common.quiz')} onClose={() => setShowQuizModal(false)}>
           <form onSubmit={handleCreateQuiz} className="cd-modal-form">
             <input
               type="text"
@@ -1180,7 +1208,7 @@ export default function CourseDetails() {
             </div>
 
             <button type="submit" className="btn btn-primary cd-full-btn">
-              Create Quiz & Notify
+              {t('common.create')} {t('common.quiz')}
             </button>
           </form>
         </Modal>
@@ -1188,7 +1216,7 @@ export default function CourseDetails() {
 
       {/* Edit Quiz Modal */}
       {showEditQuizModal && editingQuiz && (
-        <Modal title="Edit Quiz" onClose={() => { setShowEditQuizModal(false); setEditingQuiz(null); }}>
+        <Modal title={t('content.edit_quiz')} onClose={() => { setShowEditQuizModal(false); setEditingQuiz(null); }}>
           <form onSubmit={handleEditQuiz} className="cd-modal-form">
             <input
               type="text"
@@ -1208,7 +1236,7 @@ export default function CourseDetails() {
             />
 
             <button type="submit" className="btn btn-primary cd-full-btn">
-              Update Quiz
+              {t('common.update')} {t('common.quiz')}
             </button>
           </form>
         </Modal>
@@ -1315,7 +1343,7 @@ export default function CourseDetails() {
                 className={`cd-btn ${confirmModal.type === 'danger' ? 'cd-btn-danger' : 'cd-btn-warning'}`}
                 onClick={confirmModal.onConfirm}
               >
-                {confirmModal.type === 'danger' ? 'Delete' : 'Remove'}
+                {confirmModal.type === 'danger' ? t('common.delete') : t('common.remove')}
               </button>
             </div>
           </div>
@@ -1384,7 +1412,7 @@ function RemoveStudentBtn({ courseName, studentId, studentName, onRemove }) {
 
   return (
     <button type="button" onClick={handleRemove} disabled={loading || !studentId} className="cd-student-remove">
-      {loading ? '...' : 'Remove'}
+      {loading ? '...' : t('common.remove')}
     </button>
   );
 }

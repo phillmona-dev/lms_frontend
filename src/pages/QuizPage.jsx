@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import ContextChatWidget from '../components/ContextChatWidget';
 
 const Icon = ({ d, size = 18, color = 'currentColor' }) => (
@@ -46,6 +47,7 @@ const choicesOf = (question) => {
 export default function QuizPage() {
   const { courseId, quizName } = useParams();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const courseName = decodeURIComponent(courseId);
   const decodedQuizName = decodeURIComponent(quizName);
@@ -223,7 +225,7 @@ export default function QuizPage() {
     <div className="qz-page ctx-page-with-chat">
       <div className="qz-breadcrumb">
         <Link to="/courses" className="qz-crumb-link">
-          Courses
+          {t('common.courses')}
         </Link>
         <span className="qz-crumb-sep">/</span>
         <Link to={`/courses/${encodeURIComponent(courseId)}`} className="qz-crumb-link">
@@ -240,9 +242,9 @@ export default function QuizPage() {
 
           {phase === 'taking' && (
             <div className="qz-hero-chips">
-              <span className="qz-chip">{questions.length} Questions</span>
+              <span className="qz-chip">{questions.length} {t('content.questions')}</span>
               <span className={`qz-chip ${answeredCount === questions.length && questions.length ? 'is-done' : ''}`}>
-                {answeredCount}/{questions.length} Answered
+                {answeredCount}/{questions.length} {t('content.answered')}
               </span>
             </div>
           )}
@@ -259,8 +261,8 @@ export default function QuizPage() {
             <Icon d={icons.quiz} size={34} color="currentColor" />
           </span>
 
-          <h2>Ready to take the quiz?</h2>
-          <p>All questions assigned to this quiz will be shown.</p>
+          <h2>{t('content.quiz_ready')}</h2>
+          <p>{t('content.questions')} {t('common.assigned')} {t('common.to')} {t('common.quiz')}</p>
 
           {error && <p className="qz-error-box">{error}</p>}
 
@@ -273,7 +275,7 @@ export default function QuizPage() {
                   disabled={loading}
                   className="btn btn-primary qz-primary-btn"
                 >
-                  {loading ? 'Loading Quiz...' : 'Start Quiz'}
+                  {loading ? t('common.loading') : t('content.start_quiz')}
                 </button>
               )}
               {attemptLocked && (
@@ -283,7 +285,7 @@ export default function QuizPage() {
                   disabled={loading}
                   className="btn btn-secondary qz-back-btn"
                 >
-                  {loading ? 'Loading Grade...' : 'View Grade'}
+                  {loading ? t('common.loading') : t('content.view_grade')}
                 </button>
               )}
             </>
@@ -350,7 +352,7 @@ export default function QuizPage() {
           <div className="qz-submit-row">
             <span className="qz-submit-count">
               <Icon d={icons.clock} size={14} color="currentColor" />
-              {answeredCount}/{questions.length} answered
+              {answeredCount}/{questions.length} {t('content.answered')}
             </span>
 
             <button
@@ -359,10 +361,10 @@ export default function QuizPage() {
               disabled={loading || answeredCount === 0}
               className="btn btn-primary qz-primary-btn"
             >
-              {loading ? 'Submitting...' : (
+              {loading ? t('common.loading') : (
                 <>
                   <Icon d={icons.send} size={16} color="currentColor" />
-                  Submit Quiz
+                  {t('content.submit_quiz')}
                 </>
               )}
             </button>
@@ -379,10 +381,10 @@ export default function QuizPage() {
               </span>
 
               <h2>
-                {grade >= 70 ? 'Excellent work' : grade >= 50 ? 'Good job' : 'Keep practicing'}
+                {grade >= 70 ? t('content.excellent') : grade >= 50 ? t('content.good') : t('content.keep_practicing')}
               </h2>
               <p>
-                You scored <strong>{grade}%</strong> on this quiz.
+                {t('common.you')} {t('common.scored')} <strong>{grade}%</strong> {t('common.on')} {t('common.quiz')}.
               </p>
             </>
           ) : (
@@ -390,13 +392,13 @@ export default function QuizPage() {
               <span className="qz-result-wait">
                 <Icon d={icons.check} size={32} color="currentColor" />
               </span>
-              <h2>Quiz Submitted</h2>
-              <p>Your answers are recorded. Grade will appear once processed.</p>
+              <h2>{t('content.submit_quiz')} {t('common.success')}</h2>
+              <p>{t('content.results_processed')}</p>
             </>
           )}
 
           <Link to={`/courses/${encodeURIComponent(courseId)}`} className="btn btn-secondary qz-back-btn">
-            Back to Course
+            {t('common.back_to')} {t('common.course')}
           </Link>
         </section>
       )}

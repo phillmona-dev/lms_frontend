@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import ContextChatWidget from '../components/ContextChatWidget';
 
 const Icon = ({ d, size = 18, color = 'currentColor' }) => (
@@ -73,6 +74,7 @@ const Tab = ({ label, count, active, onClick }) => (
 export default function LessonDetails() {
   const { courseId, lessonId } = useParams();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const courseName = decodeURIComponent(courseId);
 
   const [lesson, setLesson] = useState(null);
@@ -110,16 +112,16 @@ export default function LessonDetails() {
 
   const tabs = useMemo(
     () => [
-      { key: 'video', label: '▶ Video' },
-      { key: 'resources', label: 'Resources', count: resources.length },
+      { key: 'video', label: '▶ ' + t('common.video') },
+      { key: 'resources', label: t('common.resources'), count: resources.length },
       {
         key: 'attendance',
-        label: isInstructor ? 'Attendance List' : 'Mark Attendance',
+        label: isInstructor ? t('content.attendance_list') : t('content.mark_attendance'),
         count: isInstructor ? attendanceList.length : undefined,
       },
-      ...(isInstructor ? [{ key: 'otp', label: 'Generate OTP' }] : []),
+      ...(isInstructor ? [{ key: 'otp', label: t('content.generate_otp') }] : []),
     ],
-    [attendanceList.length, isInstructor, resources.length],
+    [attendanceList.length, isInstructor, resources.length, t],
   );
 
   useEffect(() => {
@@ -295,12 +297,13 @@ export default function LessonDetails() {
 
   const token = localStorage.getItem('token');
   const videoStreamUrl = `/api/course/course/${encodeURIComponent(courseName)}/lessons/${lessonId}/stream-video${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  const lessonSearchHref = `/education-search?q=${encodeURIComponent(lessonTitle)}&provider=ALL&limit=8`;
 
   return (
     <div className="ld-page ctx-page-with-chat">
       <div className="ld-breadcrumb">
         <Link to="/courses" className="ld-crumb-link">
-          Courses
+          {t('common.courses')}
         </Link>
         <span className="ld-crumb-sep">/</span>
         <Link to={`/courses/${encodeURIComponent(courseName)}`} className="ld-crumb-link">
@@ -320,21 +323,46 @@ export default function LessonDetails() {
           </span>
 
           <div className="ld-hero-copy">
-            <h1>{loading ? 'Loading...' : lessonTitle}</h1>
+            <h1>{loading ? t('common.loading') : lessonTitle}</h1>
             <p>{lesson?.description || courseName}</p>
 
             <div className="ld-hero-chips">
-              <span className="ld-chip">{resources.length} Resources</span>
-              {isInstructor && <span className="ld-chip">{attendanceList.length} Attended</span>}
+              <span className="ld-chip">{resources.length} {t('common.resources')}</span>
+              {isInstructor && <span className="ld-chip">{attendanceList.length} {t('content.attended')}</span>}
               {attended && (
                 <span className="ld-chip is-success">
                   <Icon d={icons.check} size={13} color="currentColor" />
-                  Attendance Marked
+                  {t('content.attendance_confirmed')}
                 </span>
               )}
             </div>
           </div>
         </div>
+      </section>
+
+      <section
+        className="glass-panel"
+        style={{
+          padding: '1rem 1.1rem',
+          borderRadius: '16px',
+          marginTop: '0.85rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.85rem',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1rem' }}>Search This Lesson</h3>
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Find educational resources specifically for <strong>{lessonTitle}</strong>.
+          </p>
+        </div>
+        <Link to={lessonSearchHref} className="btn btn-secondary">
+          <Icon d={icons.eye} size={15} color="currentColor" />
+          {t('common.search')}
+        </Link>
       </section>
 
       <div className="ld-tabs-wrap">
@@ -380,7 +408,7 @@ export default function LessonDetails() {
                     onClick={handleVideoDelete}
                     disabled={videoDeleting}
                   >
-                    {videoDeleting ? 'Deleting...' : '🗑 Delete Video'}
+                    {videoDeleting ? t('common.loading') : '🗑 ' + t('common.delete') + " " + t('common.video')}
                   </button>
                 )}
               </div>
@@ -390,11 +418,11 @@ export default function LessonDetails() {
               <div className="ld-video-empty-icon">
                 <Icon d={icons.video} size={48} color="currentColor" />
               </div>
-              <h3>No Video Uploaded</h3>
+              <h3>{t('common.not_found')}</h3>
               <p>
                 {isInstructor
-                  ? 'Upload a video lecture for your students to watch.'
-                  : 'The instructor has not uploaded a video for this lesson yet.'}
+                  ? t('common.upload') + " " + t('common.video')
+                  : t('common.not_found')}
               </p>
             </article>
           )}
@@ -402,7 +430,7 @@ export default function LessonDetails() {
           {/* Video Upload (Instructor Only) */}
           {isInstructor && (
             <article className="ld-video-upload-card">
-              <h3>{hasVideo ? 'Replace Video' : 'Upload Video'}</h3>
+              <h3>{hasVideo ? t('common.update') + " " + t('common.video') : t('common.upload') + " " + t('common.video')}</h3>
               <p className="ld-video-upload-hint">
                 Supported: MP4, WebM, OGG, MOV, AVI, MKV (max 500MB)
               </p>
@@ -425,7 +453,7 @@ export default function LessonDetails() {
                   disabled={!videoFile || videoUploading}
                   className="btn btn-primary ld-upload-btn"
                 >
-                  {videoUploading ? 'Uploading...' : hasVideo ? 'Replace Video' : 'Upload Video'}
+                  {videoUploading ? t('common.loading') : hasVideo ? t('common.update') : t('common.upload')}
                 </button>
               </form>
 
@@ -435,7 +463,7 @@ export default function LessonDetails() {
               {videoUploadMsg === 'success' && (
                 <p className="ld-upload-msg success">
                   <Icon d={icons.check} size={14} color="currentColor" />
-                  Video uploaded successfully
+                  {t('common.success')}
                 </p>
               )}
             </article>
@@ -466,7 +494,7 @@ export default function LessonDetails() {
                   disabled={!uploadFile || uploadLoading}
                   className="btn btn-primary ld-upload-btn"
                 >
-                  {uploadLoading ? 'Uploading...' : 'Upload'}
+                  {uploadLoading ? t('common.loading') : t('common.upload')}
                 </button>
               </form>
 
@@ -474,7 +502,7 @@ export default function LessonDetails() {
               {uploadMsg === 'success' && (
                 <p className="ld-upload-msg success">
                   <Icon d={icons.check} size={14} color="currentColor" />
-                  Uploaded successfully
+                  {t('common.success')}
                 </p>
               )}
             </article>
@@ -483,7 +511,7 @@ export default function LessonDetails() {
           {loading ? (
             <div className="ld-loading">Loading resources...</div>
           ) : resources.length === 0 ? (
-            <EmptyState icon={icons.file} message="No resources uploaded yet." />
+            <EmptyState icon={icons.file} message={t('common.not_found')} />
           ) : (
             <div className="ld-resource-list">
               {resources.map((resource, index) => {
@@ -515,12 +543,12 @@ export default function LessonDetails() {
                         style={{ '--ld-file-color': color }}
                       >
                         <Icon d={icons.download} size={15} color="currentColor" />
-                        Download
+                        {t('common.download')}
                       </button>
                     ) : (
                       <span className="ld-resource-locked-badge">
                         <Icon d={icons.lock} size={13} color="currentColor" />
-                        Mark attendance to unlock
+                        {t('content.enter_otp')}
                       </span>
                     )}
                   </article>
@@ -534,15 +562,15 @@ export default function LessonDetails() {
       {tab === 'attendance' && isStudent && (
         <section className="ld-student-attendance-wrap">
           <article className="ld-student-attendance-card">
-            <h3>Mark Your Attendance</h3>
-            <p>Enter the OTP provided by your instructor to mark attendance for this lesson.</p>
+            <h3>{t('content.mark_attendance')}</h3>
+            <p>{t('content.enter_otp')}</p>
 
             {attended || attendMsg === 'success' ? (
               <div className="ld-attendance-success">
                 <span>
                   <Icon d={icons.check} size={30} color="currentColor" />
                 </span>
-                <strong>Attendance Confirmed</strong>
+                <strong>{t('content.attendance_confirmed')}</strong>
                 <p>Your attendance has been recorded.</p>
               </div>
             ) : (
@@ -568,7 +596,7 @@ export default function LessonDetails() {
                   className="btn btn-primary ld-full-btn"
                   disabled={!otpInput || attendLoading}
                 >
-                  {attendLoading ? 'Verifying...' : 'Confirm Attendance'}
+                  {attendLoading ? t('content.verifying') : t('content.confirm_attendance')}
                 </button>
               </form>
             )}
@@ -580,11 +608,11 @@ export default function LessonDetails() {
         <section className="ld-attendance-list-wrap">
           <article className="ld-attendance-panel">
             <header>
-              <h3>Students Attended ({attendanceList.length})</h3>
+              <h3>{t('content.students')} ({attendanceList.length})</h3>
             </header>
 
             {attendanceList.length === 0 ? (
-              <EmptyState icon={icons.users} message="No students have attended yet." />
+              <EmptyState icon={icons.users} message={t('common.not_found')} />
             ) : (
               attendanceList.map((student, index) => (
                 <div className="ld-attendance-row" key={studentIdOf(student, index)}>
@@ -599,7 +627,7 @@ export default function LessonDetails() {
 
                   <span className="ld-present-pill">
                     <Icon d={icons.check} size={12} color="currentColor" />
-                    Present
+                    {t('content.attended')}
                   </span>
                 </div>
               ))
@@ -617,13 +645,13 @@ export default function LessonDetails() {
               </span>
 
               <div>
-                <h3>Generate Attendance OTP</h3>
-                <p>Share this OTP with students to mark their attendance.</p>
+                <h3>{t('content.generate_otp')}</h3>
+                <p>{t('content.enter_otp')}</p>
               </div>
             </div>
 
             <div className="ld-duration-block">
-              <label>OTP Validity (minutes)</label>
+              <label>{t('content.otp_validity')}</label>
               <div className="ld-duration-list">
                 {[5, 10, 15, 30].map((itemDuration) => (
                   <button
@@ -644,12 +672,12 @@ export default function LessonDetails() {
               disabled={genLoading}
               className="btn btn-primary ld-full-btn"
             >
-              {genLoading ? 'Generating...' : 'Generate OTP'}
+              {genLoading ? t('common.loading') : t('content.generate_otp')}
             </button>
 
             {generatedOtp !== null && (
               <div className="ld-otp-result">
-                <p>OTP Generated Successfully</p>
+                <p>{t('content.otp_success')}</p>
                 <div>{generatedOtp}</div>
                 <span>
                   <Icon d={icons.clock} size={14} color="currentColor" />

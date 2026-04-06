@@ -21,14 +21,30 @@ import BehaviorReports from './pages/BehaviorReports';
 import BureauAnalytics from './pages/BureauAnalytics';
 import ProgressCenter from './pages/ProgressCenter';
 import DigitalLibrary from './pages/DigitalLibrary';
+import EducationSearch from './pages/EducationSearch';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './index.css';
+
+const resolveRole = (user) => user?.legacyRole || user?.role || user?.roles?.[0]?.name || '';
+const normalizeRoleKey = (role) => String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
+const hasCourseAccess = (user) => {
+  const role = normalizeRoleKey(resolveRole(user));
+  return role !== 'SYSTEM_ADMINISTRATOR' && role !== 'BUREAU_OF_EDUCATION';
+};
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex-center full-screen">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+const CourseRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex-center full-screen">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!hasCourseAccess(user)) return <Navigate to="/dashboard" replace />;
   return children;
 };
 
@@ -61,15 +77,15 @@ function AppRoutes() {
       {/* Course pages use the top Navbar layout */}
       <Route element={<MainLayout />}>
         <Route path="/courses" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <CourseList />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         
         <Route path="/management" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <CourseManagement />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         
         <Route path="/rbac-management" element={
@@ -114,9 +130,15 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="/bureau-analytics" element={
+        <Route path="/bureau/:tab" element={
           <ProtectedRoute>
             <BureauAnalytics />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/bureau" element={
+          <ProtectedRoute>
+            <Navigate to="/bureau/overview" replace />
           </ProtectedRoute>
         } />
 
@@ -131,37 +153,43 @@ function AppRoutes() {
             <DigitalLibrary />
           </ProtectedRoute>
         } />
+
+        <Route path="/education-search" element={
+          <ProtectedRoute>
+            <EducationSearch />
+          </ProtectedRoute>
+        } />
         
         <Route path="/courses/:courseId" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <CourseDetails />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         
         <Route path="/courses/:courseId/lessons/:lessonId" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <LessonDetails />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         <Route path="/courses/:courseId/live" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <LiveClassroom />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         <Route path="/courses/:courseId/quiz/:quizName" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <QuizPage />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         <Route path="/courses/:courseId/assignment/:assignmentId" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <AssignmentSubmit />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
         <Route path="/courses/:courseId/assignment/:assignmentId/submissions" element={
-          <ProtectedRoute>
+          <CourseRoute>
             <SubmissionsList />
-          </ProtectedRoute>
+          </CourseRoute>
         } />
       </Route>
       

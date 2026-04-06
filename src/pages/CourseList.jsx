@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Icon = ({ d, size = 18, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -26,6 +27,8 @@ const courseKeyOf = (course) => String(course?.id ?? courseNameOf(course));
 
 export default function CourseList() {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState([]);
   const [myCourses, setMyCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +41,16 @@ export default function CourseList() {
   const [enrollMsg, setEnrollMsg] = useState({});
 
   const role = user?.legacyRole || user?.roles?.[0]?.name || '';
-  const isInstructor = role.includes('INSTRUCTOR') || role.includes('TEACHER');
-  const isStudent = role.includes('STUDENT');
+  const normalizedRole = String(role).toUpperCase();
+  const isInstructor = normalizedRole.includes('INSTRUCTOR') || normalizedRole.includes('TEACHER');
+  const isStudent = normalizedRole.includes('STUDENT');
+  const canAccessCourses = !normalizedRole.includes('SYSTEM') && !normalizedRole.includes('BUREAU');
+
+  useEffect(() => {
+    if (!canAccessCourses) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [canAccessCourses, navigate]);
 
   const refreshCourses = async () => {
     setLoading(true);
@@ -68,8 +79,10 @@ export default function CourseList() {
   };
 
   useEffect(() => {
-    refreshCourses();
-  }, []);
+    if (canAccessCourses) {
+      refreshCourses();
+    }
+  }, [canAccessCourses]);
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -114,21 +127,21 @@ export default function CourseList() {
     <div className="courses-page">
       <section className="courses-hero panel-card">
         <div className="courses-hero-copy">
-          <h1>Courses</h1>
-          <p>Discover, preview, and enroll in courses across your LMS.</p>
+          <h1>{t('courses.title')}</h1>
+          <p>{t('courses.discover')}</p>
           <div className="courses-hero-tags">
-            <span className="courses-hero-chip">All: {allCourses.length}</span>
-            <span className="courses-hero-chip">Mine: {myCourses.length}</span>
-            {isInstructor && <span className="courses-hero-chip is-accent">Instructor View</span>}
+            <span className="courses-hero-chip">{t('courses.all_courses')}: {allCourses.length}</span>
+            <span className="courses-hero-chip">{t('courses.my_courses')}: {myCourses.length}</span>
+            {isInstructor && <span className="courses-hero-chip is-accent">{t('courses.instructor_view')}</span>}
           </div>
         </div>
         <div className="courses-hero-actions">
           <button type="button" className="btn btn-secondary" onClick={refreshCourses} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh'}
+            {loading ? t('courses.refreshing') : t('courses.refresh')}
           </button>
           <Link to="/dashboard" className="courses-back-link">
             <Icon d={icons.back} size={16} color="#0a8488" />
-            Back to Dashboard
+            {t('courses.back_to_dashboard')}
           </Link>
         </div>
       </section>
@@ -141,7 +154,7 @@ export default function CourseList() {
             </span>
             <input
               className="input courses-search-input"
-              placeholder="Search course by name"
+              placeholder={t('courses.search_placeholder')}
               value={searchQuery}
               onChange={(event) => {
                 setSearchQuery(event.target.value);
@@ -153,14 +166,14 @@ export default function CourseList() {
             />
           </div>
           <button type="submit" className="btn btn-primary" disabled={searching}>
-            {searching ? 'Searching...' : 'Search'}
+            {searching ? t('courses.searching') : t('courses.search')}
           </button>
         </form>
       </section>
 
       {searchResult && (
         <section className="panel-card">
-          <h2 className="section-title">Search Result</h2>
+          <h2 className="section-title">{t('courses.search_result')}</h2>
           <div className="courses-grid">
             <CourseCard
               course={searchResult}
@@ -176,7 +189,7 @@ export default function CourseList() {
       )}
 
       {searchError && (
-        <div className="status-message status-error">No course found with that name.</div>
+        <div className="status-message status-error">{t('courses.no_course_found')}</div>
       )}
 
       <section className="courses-tabs-wrap">
@@ -185,14 +198,14 @@ export default function CourseList() {
           className={`courses-tab ${tab === 'all' ? 'is-active' : ''}`}
           onClick={() => setTab('all')}
         >
-          All Courses ({allCourses.length})
+          {t('courses.all_courses')} ({allCourses.length})
         </button>
         <button
           type="button"
           className={`courses-tab ${tab === 'my' ? 'is-active' : ''}`}
           onClick={() => setTab('my')}
         >
-          My Courses ({myCourses.length})
+          {t('courses.my_courses')} ({myCourses.length})
         </button>
       </section>
 
@@ -205,10 +218,10 @@ export default function CourseList() {
       ) : displayCourses.length === 0 ? (
         <section className="courses-empty panel-card">
           <Icon d={icons.book} size={44} color="#b9ccdb" />
-          <p>{tab === 'my' ? 'You have no courses yet. Enroll from All Courses.' : 'No courses found.'}</p>
+          <p>{tab === 'my' ? t('courses.no_courses_yet') : t('courses.no_courses_found')}</p>
           {tab === 'my' && (
             <button type="button" className="btn btn-primary" onClick={() => setTab('all')}>
-              Browse All Courses
+              {t('courses.browse_all')}
             </button>
           )}
         </section>
@@ -236,6 +249,7 @@ export default function CourseList() {
 }
 
 function CourseCard({ course, color, isEnrolled, isStudent, onEnroll, enrolling, enrollMsg }) {
+  const { t } = useTranslation();
   const name = courseNameOf(course);
   const description = course.courseDescription || course.description || 'No description provided.';
   const duration = course.courseDuration || course.duration;
@@ -258,7 +272,7 @@ function CourseCard({ course, color, isEnrolled, isStudent, onEnroll, enrolling,
             <h3>{name}</h3>
             {duration && (
               <span className="course-duration">
-                <Icon d={icons.clock} size={12} color="#7f97ac" /> {duration} hrs
+                <Icon d={icons.clock} size={12} color="#7f97ac" /> {duration} {t('courses.hrs')}
               </span>
             )}
           </div>
@@ -278,7 +292,7 @@ function CourseCard({ course, color, isEnrolled, isStudent, onEnroll, enrolling,
         {isEnrolled && (
           <div className="course-enrolled-chip">
             <Icon d={icons.check} size={13} color="#15803d" />
-            Enrolled
+            {t('courses.enrolled')}
           </div>
         )}
 
@@ -288,7 +302,7 @@ function CourseCard({ course, color, isEnrolled, isStudent, onEnroll, enrolling,
 
         <div className="course-actions">
           <Link to={`/courses/${encodeURIComponent(name)}`} className="course-view-btn">
-            View
+            {t('courses.view')}
             <Icon d={icons.arrow} size={14} color="currentColor" />
           </Link>
           {isStudent && !isEnrolled && (
@@ -298,10 +312,10 @@ function CourseCard({ course, color, isEnrolled, isStudent, onEnroll, enrolling,
               disabled={enrolling}
               onClick={() => onEnroll(name, courseKey)}
             >
-              {enrolling ? 'Enrolling...' : (
+              {enrolling ? t('courses.enrolling') : (
                 <>
                   <Icon d={icons.plus} size={14} color="white" />
-                  Enroll
+                  {t('courses.enroll')}
                 </>
               )}
             </button>

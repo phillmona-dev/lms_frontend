@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link2, RefreshCcw, Search, Unlink, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const getRole = (user) => user?.legacyRole || user?.role || user?.roles?.[0]?.name || '';
 const formatRoleLabel = (value) => String(value || 'USER').replaceAll('_', ' ');
@@ -24,6 +25,7 @@ const ProgressStatCard = ({ label, value, tone }) => (
 
 export default function ProgressCenter() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const role = getRole(user);
 
   const isParent = role === 'PARENT';
@@ -106,10 +108,10 @@ export default function ProgressCenter() {
   const summaryStats = useMemo(() => {
     const trackedLearners = isParent ? childrenProgress.length : studentCandidates.length;
     return [
-      { label: 'Role', value: roleLabel, tone: 'is-neutral' },
-      { label: 'Tracked Learners', value: trackedLearners, tone: 'is-info' },
-      { label: 'Lookup Pool', value: lookupCandidates.length, tone: 'is-success' },
-      { label: 'Active Links', value: activeLinksCount, tone: 'is-warning' },
+      { label: t('common.role'), value: roleLabel, tone: 'is-neutral' },
+      { label: t('progress.tracked_learners'), value: trackedLearners, tone: 'is-info' },
+      { label: t('progress.lookup_pool'), value: lookupCandidates.length, tone: 'is-success' },
+      { label: t('progress.active_links'), value: activeLinksCount, tone: 'is-warning' },
     ];
   }, [activeLinksCount, childrenProgress.length, isParent, lookupCandidates.length, roleLabel, studentCandidates.length]);
 
@@ -195,7 +197,7 @@ export default function ProgressCenter() {
   const loadStudentProgress = async () => {
     setMessage({ type: '', text: '' });
     if (!selectedStudentId) {
-      setMessage({ type: 'error', text: 'Select a student first.' });
+      setMessage({ type: 'error', text: t('common.error') });
       return;
     }
 
@@ -216,14 +218,14 @@ export default function ProgressCenter() {
     event.preventDefault();
     setMessage({ type: '', text: '' });
     if (!linkForm.parentId || !linkForm.studentId) {
-      setMessage({ type: 'error', text: 'Select both parent and student to link.' });
+      setMessage({ type: 'error', text: t('common.error') });
       return;
     }
 
     setWorking(true);
     try {
       const response = await axios.post('/api/progress/parent-links', linkForm);
-      setMessage({ type: 'success', text: 'Parent linked successfully.' });
+      setMessage({ type: 'success', text: t('common.success') });
       if (response.data) {
         setParentLinks((prev) => [response.data, ...prev.filter((p) => p.id !== response.data.id)]);
       }
@@ -239,14 +241,14 @@ export default function ProgressCenter() {
     event.preventDefault();
     setMessage({ type: '', text: '' });
     if (!unlinkForm.parentId || !unlinkForm.studentId) {
-      setMessage({ type: 'error', text: 'Select both parent and student to unlink.' });
+      setMessage({ type: 'error', text: t('common.error') });
       return;
     }
 
     setWorking(true);
     try {
       await axios.delete(`/api/progress/parent-links/${unlinkForm.parentId}/${unlinkForm.studentId}`);
-      setMessage({ type: 'success', text: 'Parent-student link removed.' });
+      setMessage({ type: 'success', text: t('common.success') });
       setParentLinks((prev) =>
         prev.map((link) =>
           link.parentId === unlinkForm.parentId && link.studentId === unlinkForm.studentId
@@ -304,7 +306,7 @@ export default function ProgressCenter() {
       {canManageLinks && (
         <section className="progress-center-grid">
           <article className="panel-card">
-            <h2 className="section-title"><Link2 size={18} /> Link Parent To Student</h2>
+            <h2 className="section-title"><Link2 size={18} /> {t('progress.link_parent_student')}</h2>
             <form className="stack-form" onSubmit={handleLinkParent}>
               <label htmlFor="link-parent">Parent</label>
               <select
@@ -340,13 +342,13 @@ export default function ProgressCenter() {
 
               <button type="submit" className="btn btn-primary" disabled={working}>
                 <Link2 size={16} />
-                Link
+                {t('common.add')}
               </button>
             </form>
           </article>
 
           <article className="panel-card">
-            <h2 className="section-title"><Unlink size={18} /> Unlink Parent From Student</h2>
+            <h2 className="section-title"><Unlink size={18} /> {t('progress.unlink_parent_student')}</h2>
             <form className="stack-form" onSubmit={handleUnlinkParent}>
               <label htmlFor="unlink-parent">Parent</label>
               <select
@@ -382,7 +384,7 @@ export default function ProgressCenter() {
 
               <button type="submit" className="btn btn-danger" disabled={working}>
                 <Unlink size={16} />
-                Unlink
+                {t('common.delete')}
               </button>
             </form>
           </article>
@@ -396,16 +398,16 @@ export default function ProgressCenter() {
             <div className="progress-section-toolbar">
               <input
                 className="input progress-search-input"
-                placeholder="Search links by student"
+                placeholder={t('common.search')}
                 value={linkSearch}
                 onChange={(e) => setLinkSearch(e.target.value)}
               />
             </div>
           </div>
           {parentLinks.length === 0 ? (
-            <p className="users-muted">{loading ? 'Loading links...' : 'No parent-student links found.'}</p>
+            <p className="users-muted">{loading ? t('common.loading') : t('common.not_found')}</p>
           ) : filteredParentLinks.length === 0 ? (
-            <p className="users-muted">No links match your search.</p>
+            <p className="users-muted">{t('common.not_found')}</p>
           ) : (
             <div className="progress-links-list">
               {filteredParentLinks.map((link) => (
@@ -422,20 +424,20 @@ export default function ProgressCenter() {
       {isParent && (
         <section className="panel-card">
           <div className="progress-section-head">
-            <h2 className="section-title"><Users size={18} /> My Children Progress</h2>
+            <h2 className="section-title"><Users size={18} /> {t('progress.children_progress')}</h2>
             <div className="progress-section-toolbar">
               <input
                 className="input progress-search-input"
-                placeholder="Search child by name or email"
+                placeholder={t('common.search')}
                 value={childrenSearch}
                 onChange={(e) => setChildrenSearch(e.target.value)}
               />
             </div>
           </div>
           {childrenProgress.length === 0 ? (
-            <p className="users-muted">{loading ? 'Loading progress...' : 'No progress records available.'}</p>
+            <p className="users-muted">{loading ? t('common.loading') : t('common.not_found')}</p>
           ) : filteredChildrenProgress.length === 0 ? (
-            <p className="users-muted">No children match your search.</p>
+            <p className="users-muted">{t('common.not_found')}</p>
           ) : (
             <div className="children-progress-grid">
               {filteredChildrenProgress.map((student) => (
@@ -445,9 +447,9 @@ export default function ProgressCenter() {
                   <span className={`progress-tier-chip is-${progressTier(student.overallProgressRate).toLowerCase()}`}>
                     {progressTier(student.overallProgressRate)}
                   </span>
-                  <small>Attendance: {pct(student.attendanceRate)}</small>
-                  <small>Assignments: {pct(student.assignmentCompletionRate)}</small>
-                  <small>Overall: {pct(student.overallProgressRate)}</small>
+                  <small>{t('progress.attendance')}: {pct(student.attendanceRate)}</small>
+                  <small>{t('content.assignments')}: {pct(student.assignmentCompletionRate)}</small>
+                  <small>{t('progress.overall')}: {pct(student.overallProgressRate)}</small>
                 </div>
               ))}
             </div>
@@ -458,11 +460,11 @@ export default function ProgressCenter() {
       {canUseLookup && (
         <section className="panel-card">
           <div className="progress-section-head">
-            <h2 className="section-title"><Search size={18} /> Student Progress Lookup</h2>
+            <h2 className="section-title"><Search size={18} /> {t('progress.student_lookup')}</h2>
             <div className="progress-section-toolbar">
               <input
                 className="input progress-search-input"
-                placeholder="Filter lookup candidates"
+                placeholder={t('common.search')}
                 value={lookupSearch}
                 onChange={(e) => setLookupSearch(e.target.value)}
               />
@@ -472,7 +474,7 @@ export default function ProgressCenter() {
             <div className="progress-lookup-fields">
               <input
                 className="input"
-                placeholder="Student UUID"
+                placeholder="ID"
                 value={selectedStudentId}
                 onChange={(e) => setSelectedStudentId(e.target.value)}
               />
@@ -493,12 +495,12 @@ export default function ProgressCenter() {
             </div>
             <button type="button" className="btn btn-secondary" onClick={loadStudentProgress} disabled={loadingLookup}>
               <Search size={16} />
-              {loadingLookup ? 'Loading...' : 'Load'}
+              {loadingLookup ? t('common.loading') : t('common.search')}
             </button>
           </div>
 
           {!studentProgress ? (
-            <p className="users-muted" style={{ marginTop: '0.85rem' }}>No student snapshot loaded yet.</p>
+            <p className="users-muted" style={{ marginTop: '0.85rem' }}>{t('common.not_found')}</p>
           ) : (
             <div className="progress-snapshot">
               <div className="progress-snapshot-head">
@@ -507,14 +509,14 @@ export default function ProgressCenter() {
               </div>
 
               <div className="progress-snapshot-metrics">
-                <small>Attendance: {pct(studentProgress.attendanceRate)}</small>
-                <small>Assignments: {pct(studentProgress.assignmentCompletionRate)}</small>
-                <small>Overall: {pct(studentProgress.overallProgressRate)}</small>
+                <small>{t('progress.attendance')}: {pct(studentProgress.attendanceRate)}</small>
+                <small>{t('content.assignments')}: {pct(studentProgress.assignmentCompletionRate)}</small>
+                <small>{t('progress.overall')}: {pct(studentProgress.overallProgressRate)}</small>
                 <small className={`progress-tier-chip is-${progressTier(studentProgress.overallProgressRate).toLowerCase()}`}>
                   {progressTier(studentProgress.overallProgressRate)}
                 </small>
-                <small>Behavior Reports: {studentProgress.behaviorReportCount || 0}</small>
-                <small>Harmful Reports: {studentProgress.harmfulContentReportCount || 0}</small>
+                <small>{t('insights.signals')} (Behavior): {studentProgress.behaviorReportCount || 0}</small>
+                <small>{t('insights.signals')} (Harmful): {studentProgress.harmfulContentReportCount || 0}</small>
               </div>
 
               {Array.isArray(studentProgress.courseProgress) && studentProgress.courseProgress.length > 0 && (
@@ -523,7 +525,7 @@ export default function ProgressCenter() {
                     <div key={course.courseId} className="progress-course-item">
                       <strong>{course.courseName}</strong>
                       <span>
-                        Lessons: {course.attendedLessons}/{course.totalLessons} | Assignments: {course.submittedAssignments}/{course.totalAssignments}
+                        {t('common.lessons')}: {course.attendedLessons}/{course.totalLessons} | {t('content.assignments')}: {course.submittedAssignments}/{course.totalAssignments}
                       </span>
                     </div>
                   ))}

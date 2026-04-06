@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { RefreshCcw, Search, Trash2, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const ROLE_OPTIONS = [
   'STUDENT',
@@ -55,6 +56,7 @@ const UserStatCard = ({ label, value, tone }) => (
 
 export default function UserManagement() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const currentRole = toCanonicalRole(getRole(user));
   const isAdmin = ['SCHOOL_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR'].includes(currentRole);
   const isSystemAdmin = currentRole === 'SYSTEM_ADMINISTRATOR';
@@ -147,10 +149,10 @@ export default function UserManagement() {
     const teachers = users.filter((u) => toCanonicalRole(getRole(u)) === 'TEACHER').length;
     const students = users.filter((u) => toCanonicalRole(getRole(u)) === 'STUDENT').length;
     return [
-      { label: 'Total Users', value: total, tone: 'is-info' },
-      { label: 'Admins', value: admins, tone: 'is-warning' },
-      { label: 'Teachers', value: teachers, tone: 'is-success' },
-      { label: 'Students', value: students, tone: 'is-neutral' },
+      { label: t('administration.user_management'), value: total, tone: 'is-info' },
+      { label: t('administration.roles'), value: admins, tone: 'is-warning' },
+      { label: t('common.role') + " (Teacher)", value: teachers, tone: 'is-success' },
+      { label: t('common.role') + " (Student)", value: students, tone: 'is-neutral' },
     ];
   }, [users]);
 
@@ -168,7 +170,7 @@ export default function UserManagement() {
     setMessage({ type: '', text: '' });
 
     if (!formData.name || !formData.email || !formData.password || !formData.role) {
-      setMessage({ type: 'error', text: 'Please fill in all fields.' });
+      setMessage({ type: 'error', text: t('common.error') });
       return;
     }
 
@@ -180,7 +182,7 @@ export default function UserManagement() {
     setCreating(true);
     try {
       const response = await axios.post('/api/users/users/create', formData);
-      const successMessage = response.data?.message || 'User created successfully.';
+      const successMessage = response.data?.message || t('common.success');
       setMessage({ type: 'success', text: successMessage });
       resetForm();
       await loadUsers();
@@ -203,7 +205,7 @@ export default function UserManagement() {
     try {
       await axios.delete(`/api/users/users/delete/${userId}`);
       setUsers((prev) => prev.filter((u) => Number(u.legacyId) !== Number(userId)));
-      setMessage({ type: 'success', text: 'User deleted successfully.' });
+      setMessage({ type: 'success', text: t('common.success') });
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.response?.data || 'Failed to delete user.';
       setMessage({ type: 'error', text: String(errorMessage) });
@@ -215,8 +217,8 @@ export default function UserManagement() {
   if (!isAdmin) {
     return (
       <section className="panel-card">
-        <h2>Access Restricted</h2>
-        <p>This page is available only for school and system administrators.</p>
+        <h2>{t('administration.restricted')}</h2>
+        <p>{t('administration.restricted_desc')}</p>
       </section>
     );
   }
@@ -225,17 +227,17 @@ export default function UserManagement() {
     <div className="users-page">
       <section className="users-hero panel-card">
         <div className="users-hero-copy">
-          <h1>User Management</h1>
-          <p>Create and manage platform users from one place.</p>
+          <h1>{t('administration.user_management')}</h1>
+          <p>{t('administration.user_mgmt_subtitle')}</p>
           <div className="users-hero-tags">
-            <span className="users-hero-chip">Role: {formatRoleLabel(currentRole)}</span>
-            <span className="users-hero-chip">Users: {users.length}</span>
-            <span className="users-hero-chip is-accent">Filtered: {filteredUsers.length}</span>
+            <span className="users-hero-chip">{t('common.role')}: {formatRoleLabel(currentRole)}</span>
+            <span className="users-hero-chip">{t('administration.user_management')}: {users.length}</span>
+            <span className="users-hero-chip is-accent">{t('common.search')}: {filteredUsers.length}</span>
           </div>
         </div>
         <button type="button" className="btn btn-secondary" onClick={loadUsers} disabled={loadingUsers}>
           <RefreshCcw size={16} />
-          {loadingUsers ? 'Refreshing...' : 'Refresh'}
+          {loadingUsers ? t('common.loading') : t('common.refresh')}
         </button>
       </section>
 
@@ -253,11 +255,11 @@ export default function UserManagement() {
 
       <section className="users-layout">
         <article className="panel-card users-form-card">
-          <h2>Create User</h2>
-          <p>Add a new account using backend endpoint permissions.</p>
+          <h2>{t('administration.create_user')}</h2>
+          <p>{t('administration.user_mgmt_subtitle')}</p>
 
           <form className="user-create-form" onSubmit={handleCreateUser}>
-            <label htmlFor="name">Name</label>
+            <label htmlFor="name">{t('common.user')}</label>
             <input
               id="name"
               className="input"
@@ -278,7 +280,7 @@ export default function UserManagement() {
               required
             />
 
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t('common.password')}</label>
             <input
               id="password"
               type="password"
@@ -290,7 +292,7 @@ export default function UserManagement() {
               required
             />
 
-            <label htmlFor="role">Role</label>
+            <label htmlFor="role">{t('common.role')}</label>
             <select
               id="role"
               className="input"
@@ -307,14 +309,14 @@ export default function UserManagement() {
 
             <button type="submit" className="btn btn-primary users-create-btn" disabled={creating}>
               <UserPlus size={18} />
-              {creating ? 'Creating...' : 'Create User'}
+              {creating ? t('common.loading') : t('administration.create_user')}
             </button>
           </form>
         </article>
 
         <article className="panel-card users-list-card">
           <div className="users-list-head">
-            <h2>Users</h2>
+            <h2>{t('administration.user_management')}</h2>
             <div className="users-list-tools">
               <div className="users-search-wrap">
                 <Search size={16} />
@@ -322,7 +324,7 @@ export default function UserManagement() {
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search by name, email, role"
+                  placeholder={t('common.search')}
                 />
               </div>
               <select
@@ -330,7 +332,7 @@ export default function UserManagement() {
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
               >
-                <option value="ALL">All roles</option>
+                <option value="ALL">{t('common.all')}</option>
                 {availableRoles.map((role) => (
                   <option key={role} value={role}>
                     {formatRoleLabel(role)}
@@ -341,20 +343,20 @@ export default function UserManagement() {
           </div>
 
           {loadingUsers ? (
-            <p className="users-muted">Loading users...</p>
+            <p className="users-muted">{t('common.loading')}</p>
           ) : filteredUsers.length === 0 ? (
-            <p className="users-muted">No users found from backend.</p>
+            <p className="users-muted">{t('common.not_found')}</p>
           ) : (
             <div className="users-table-wrap">
               <table className="users-table">
                 <thead>
                   <tr>
-                    <th>User</th>
+                    <th>{t('common.user')}</th>
                     <th>Email</th>
-                    <th>Role</th>
+                    <th>{t('common.role')}</th>
                     <th>School</th>
                     <th>ID</th>
-                    <th>Actions</th>
+                    <th>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -381,10 +383,10 @@ export default function UserManagement() {
                             className="btn btn-danger user-delete-btn"
                             onClick={() => handleDelete(legacyId, u.name || u.email || 'user')}
                             disabled={deleting || !legacyId}
-                            title="Delete user"
+                            title={t('common.delete')}
                           >
                             <Trash2 size={16} />
-                            {deleting ? 'Deleting...' : 'Delete'}
+                            {deleting ? t('common.loading') : t('common.delete')}
                           </button>
                         </td>
                       </tr>

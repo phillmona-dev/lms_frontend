@@ -2,15 +2,17 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const resolveRole = (user) => user?.legacyRole || user?.role || user?.roles?.[0]?.name || '';
+const normalizeRoleKey = (role) => String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const role = resolveRole(user);
+  const role = normalizeRoleKey(resolveRole(user));
   const isAdmin = role === 'SCHOOL_ADMINISTRATOR' || role === 'SYSTEM_ADMINISTRATOR';
   const isSystemAdmin = role === 'SYSTEM_ADMINISTRATOR';
   const isSchoolAdmin = role === 'SCHOOL_ADMINISTRATOR';
   const isBureauUser = role === 'BUREAU_OF_EDUCATION' || role === 'SYSTEM_ADMINISTRATOR';
+  const canAccessCourses = role !== 'SYSTEM_ADMINISTRATOR' && role !== 'BUREAU_OF_EDUCATION';
   const canUseBehaviorReports = ['TEACHER', 'SCHOOL_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR', 'PARENT', 'STUDENT'].includes(role);
   const canUseProgressCenter = ['PARENT', 'TEACHER', 'SCHOOL_ADMINISTRATOR', 'SYSTEM_ADMINISTRATOR'].includes(role);
 
@@ -33,7 +35,9 @@ export default function Navbar() {
           <>
             <span className="top-nav-welcome">Welcome, {user.name}</span>
             <NavLink to="/dashboard" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Dashboard</NavLink>
-            <NavLink to="/courses" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Courses</NavLink>
+            {canAccessCourses && (
+              <NavLink to="/courses" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Courses</NavLink>
+            )}
             {isAdmin && (
               <NavLink to="/users-management" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Users</NavLink>
             )}
@@ -52,6 +56,7 @@ export default function Navbar() {
             {canUseProgressCenter && (
               <NavLink to="/progress-center" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Progress</NavLink>
             )}
+            <NavLink to="/education-search" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Edu Search</NavLink>
             <NavLink to="/digital-library" className={({ isActive }) => `top-nav-link ${isActive ? 'is-active' : ''}`}>Library</NavLink>
             <button onClick={handleLogout} className="btn btn-danger top-nav-logout">
               Logout

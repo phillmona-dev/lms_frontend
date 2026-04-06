@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Icon = ({ d, size = 18, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -22,6 +23,7 @@ const icons = {
 
 export default function CourseManagement() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function CourseManagement() {
       setNewCourse({ name: '', description: '', duration: '' });
       // navigate(`/courses/${encodeURIComponent(res.data.name)}`);
     } catch (err) {
-      setError(err.response?.data || "Failed to create course");
+      setError(err.response?.data || t('courses.management.create_failed', { defaultValue: "Failed to create course" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -80,8 +82,8 @@ export default function CourseManagement() {
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Course Management</h1>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748b' }}>Manage your created courses and curriculum</p>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>{t('courses.management.title')}</h1>
+          <p style={{ margin: '0.25rem 0 0', color: '#64748b' }}>{t('courses.management.subtitle')}</p>
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
@@ -89,14 +91,14 @@ export default function CourseManagement() {
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px', padding: '0.75rem 1.5rem' }}
         >
           <Icon d={icons.plus} size={20} color="white" />
-          Create New Course
+          {t('courses.management.create_new')}
         </button>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem' }}>
           <div className="animate-spin" style={{ fontSize: '2rem' }}>⌛</div>
-          <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading your courses...</p>
+          <p style={{ marginTop: '1rem', color: '#64748b' }}>{t('courses.management.loading')}</p>
         </div>
       ) : courses.length === 0 ? (
         <div style={{ 
@@ -119,16 +121,16 @@ export default function CourseManagement() {
           }}>
             <Icon d={icons.book} size={40} color="#94a3b8" />
           </div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Courses Yet</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('courses.management.no_courses')}</h3>
           <p style={{ color: '#64748b', marginBottom: '2rem', maxWidth: '400px', margin: '0 auto 2rem' }}>
-            You haven't created any courses yet. Start your journey as an instructor by sharing your knowledge.
+            {t('courses.management.no_courses_desc')}
           </p>
           <button 
             onClick={() => setShowCreateModal(true)}
             className="btn btn-primary"
             style={{ borderRadius: '12px' }}
           >
-            Create Your First Course
+            {t('courses.management.create_first')}
           </button>
         </div>
       ) : (
@@ -181,11 +183,11 @@ export default function CourseManagement() {
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#64748b', fontSize: '0.8rem' }}>
                   <Icon d={icons.clock} size={14} />
-                  {course.courseDuration} hrs
+                  {course.courseDuration} {t('courses.hrs')}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#64748b', fontSize: '0.8rem' }}>
                   <Icon d={icons.user} size={14} />
-                  Enrolled Students
+                  {t('courses.management.enrolled_students')}
                 </div>
               </div>
               
@@ -194,7 +196,7 @@ export default function CourseManagement() {
                 className="btn btn-secondary" 
                 style={{ textAlign: 'center', borderRadius: '10px', fontSize: '0.85rem' }}
               >
-                Manage Course Content
+                {t('courses.management.manage_content')}
               </Link>
             </div>
           ))}
@@ -226,7 +228,7 @@ export default function CourseManagement() {
             boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Create New Course</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{t('courses.management.modal_title')}</h2>
               <button 
                 onClick={() => setShowCreateModal(false)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5rem', color: '#64748b' }}
@@ -251,12 +253,12 @@ export default function CourseManagement() {
             
             <form onSubmit={handleCreateCourse} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Course Name</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{t('courses.management.name_label')}</label>
                 <input 
                   type="text" 
                   className="input premium-input"
                   required
-                  placeholder="e.g. Advanced Java Programming"
+                  placeholder={t('courses.management.name_placeholder')}
                   value={newCourse.name}
                   onChange={e => setNewCourse({...newCourse, name: e.target.value})}
                   style={{ padding: '0.75rem 1rem', borderRadius: '10px' }}
@@ -264,12 +266,12 @@ export default function CourseManagement() {
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Description</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{t('courses.management.description_label')}</label>
                 <textarea 
                   className="input premium-input"
                   required
                   rows="4"
-                  placeholder="What will students learn in this course?"
+                  placeholder={t('courses.management.desc_placeholder')}
                   value={newCourse.description}
                   onChange={e => setNewCourse({...newCourse, description: e.target.value})}
                   style={{ padding: '0.75rem 1rem', borderRadius: '10px', resize: 'none' }}
@@ -277,7 +279,7 @@ export default function CourseManagement() {
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Duration (Hours)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{t('courses.management.duration_label')}</label>
                 <input 
                   type="number" 
                   step="0.5"
@@ -297,7 +299,7 @@ export default function CourseManagement() {
                   className="btn btn-secondary"
                   style={{ flex: 1, borderRadius: '12px' }}
                 >
-                  Cancel
+                  {t('courses.management.cancel')}
                 </button>
                 <button 
                   type="submit"
@@ -305,7 +307,7 @@ export default function CourseManagement() {
                   className="btn btn-primary"
                   style={{ flex: 2, borderRadius: '12px', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Course'}
+                  {isSubmitting ? t('courses.management.creating') : t('courses.management.create')}
                 </button>
               </div>
             </form>
